@@ -14,11 +14,11 @@ return new class extends Migration
     public function up()
     {
         Schema::create('messages', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->enum('status', ['pending', 'success', 'failed']);
             $table->string('phone');
             $table->string('text');
-            $table->unsignedBigInteger('customer_id');
+            $table->string('customer_id');
             $table->timestamps();
         });
     }
