@@ -9,13 +9,22 @@ use Illuminate\Validation\Rule;
 
 class MessageController extends Controller
 {
-    public function read(Request $request) {
+    public function read(Request $request)
+    {
         $status = $request->input('status', 'all');
+        $customer = $request->customer;
 
-        if ($status == 'all') {
-            $messages = Message::all();
-        } else {
-            $messages = Message::where('status', $status)->get();
+        $messages = Message::query();
+        if ($customer['role'] != 'system') {
+            $messages->where('customer_id', $customer['id']);
+        }
+        if ($status != 'all') {
+            $messages->where('status', $status);
+        }
+        $messages = $messages->get();
+
+        foreach ($messages as $message) {
+            $message["callback_url"] = urlMainServer() . "/api/messages/" . $message['id'];
         }
 
         return response()->json([
@@ -25,7 +34,25 @@ class MessageController extends Controller
         ], 200);
     }
 
-    public function create(Request $request) {
+    public function readById(Request $request, $id)
+    {
+        $message = Message::find($id);
+        if (!$message) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Message Not Found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Message Data',
+            'data' => $message
+        ], 200);
+    }
+
+    public function create(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'phone' => 'required|numeric',
             'text' => 'required'
@@ -39,10 +66,11 @@ class MessageController extends Controller
             ], 422);
         }
 
+        $customer = $request->customer;
         $data = $validator->validated();
 
         $data["status"] = "pending";
-        $data["customer_id"] = 1;
+        $data["customer_id"] = $customer['id'];
 
         Message::create($data);
 
@@ -52,7 +80,8 @@ class MessageController extends Controller
         ], 200);
     }
 
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
         $validator = Validator::make($request->all(), [
             'status' => ['required', Rule::in(['pending', 'success', 'failed'])]
         ]);

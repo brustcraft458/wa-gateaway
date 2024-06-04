@@ -16,18 +16,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
 // System
-Route::middleware(['role-system'])->group(function() {
-    Route::get('/messages/pending', [MessageController::class, 'readPending']);
+Route::middleware(['role-system'])->group(function () {
     Route::put('/messages/{id}', [MessageController::class, 'update']);
 });
 
 // User
-Route::middleware(['role-everyone'])->group(function() {
+Route::middleware(['role-everyone'])->group(function () {
     Route::get('/messages', [MessageController::class, 'read']);
     Route::get('/messages/{id}', [MessageController::class, 'readById']);
     Route::post('/messages', [MessageController::class, 'create']);

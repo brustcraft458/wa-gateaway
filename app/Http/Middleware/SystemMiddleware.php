@@ -45,6 +45,7 @@ class SystemMiddleware
             ], 401);
         }
 
+        $request->merge(['customer' => $customer]);
         return $next($request);
     }
 }
