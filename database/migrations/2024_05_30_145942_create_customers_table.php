@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('phone');
             $table->string('project');
             $table->enum('role', ['user', 'system']);
+            $table->integer('count_message');
+            $table->integer('limit_message');
             $table->timestamps();
         });
     }

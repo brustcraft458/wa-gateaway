@@ -9,8 +9,15 @@ use Illuminate\Validation\Rule;
 
 class MessageController extends Controller
 {
-    public function read() {
-        $messages = Message::all();
+    public function read(Request $request) {
+        $status = $request->input('status', 'all');
+
+        if ($status == 'all') {
+            $messages = Message::all();
+        } else {
+            $messages = Message::where('status', $status)->get();
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Message List',
