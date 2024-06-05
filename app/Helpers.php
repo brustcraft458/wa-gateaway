@@ -4,6 +4,9 @@
 if (!function_exists('urlMainServer')) {
     function urlMainServer()
     {
-        return env('APP_URL') . ($_SERVER['SERVER_PORT'] ? ":" . $_SERVER['SERVER_PORT'] : "");
+        $url = env('APP_URL');
+        $port = (($_SERVER['SERVER_PORT'] != '80' && $_SERVER['SERVER_PORT'] != '443') ? $_SERVER['SERVER_PORT'] : '');
+        
+        return  $url . ($port != '' ? ':' : '' ) . $port;
     }
 }

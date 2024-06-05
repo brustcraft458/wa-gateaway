@@ -23,10 +23,6 @@ class MessageController extends Controller
         }
         $messages = $messages->get();
 
-        foreach ($messages as $message) {
-            $message["callback_url"] = urlMainServer() . "/api/messages/" . $message['id'];
-        }
-
         return response()->json([
             'success' => true,
             'message' => 'Message List',
@@ -72,11 +68,12 @@ class MessageController extends Controller
         $data["status"] = "pending";
         $data["customer_id"] = $customer['id'];
 
-        Message::create($data);
+        $message = Message::create($data);
 
         return response()->json([
             'success' => true,
-            'message' => 'Message Added'
+            'message' => 'Message Added',
+            'callback_url' => urlMainServer() . "/api/messages/" . $message['id']
         ], 200);
     }
 
