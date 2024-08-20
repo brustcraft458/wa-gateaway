@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "qrcode": "^1.5.3",
+    "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js#webpack-exodus"
+  }
+}
