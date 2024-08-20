@@ -13,3 +13,7 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
+/homeserver/node_modules
+/homeserver/enviroment/env.js
+/homeserver/qrcode.png
+/homeserver/package-lock.json
