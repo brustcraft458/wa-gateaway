@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->enum('status', ['pending', 'success', 'failed']);
+            $table->enum('status', ['pending', 'sending', 'success', 'failed']);
             $table->string('phone');
             $table->string('text');
             $table->string('customer_id');

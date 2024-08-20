@@ -80,7 +80,7 @@ class MessageController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'status' => ['required', Rule::in(['pending', 'success', 'failed'])]
+            'status' => ['required', Rule::in(['pending', 'sending', 'success', 'failed'])]
         ]);
 
         if ($validator->fails()) {
