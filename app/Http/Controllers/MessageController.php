@@ -50,7 +50,8 @@ class MessageController extends Controller
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|numeric',
+            'phone' => 'nullable|numeric',
+            'phone_list' => 'nullable|array',
             'text' => 'required'
         ]);
 
@@ -64,16 +65,68 @@ class MessageController extends Controller
 
         $customer = $request->customer;
         $data = $validator->validated();
+        
+        // Data
+        $data['status'] = 'pending';
+        $data['customer_id'] = $customer['id'];
 
-        $data["status"] = "pending";
-        $data["customer_id"] = $customer['id'];
+        if (isset($data['phone'])) {
+            // Check
+            $data['hash'] = hash('sha256', $data['phone'] . $data['text']);
+            $exists = Message::where('hash', $data['hash'])->exists();
+            if ($exists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Double Message'
+                ], 409);
+            }
 
-        $message = Message::create($data);
+            // New data
+            $nData = [
+                'phone' => $data['phone'],
+                'status' => $data['status'],
+                'hash' => $data['hash'],
+                'text' => $data['text'],
+                'customer_id' => $data['customer_id']
+            ];
+            
+            $message = Message::create($nData);
+
+        } else if(isset($data['phone_list'])) {
+            // Phone List Array
+            foreach ($data['phone_list'] as $phone) {
+                // Check
+                $data['hash'] = hash('sha256', $phone . $data['text']);
+                $exists = Message::where('hash', $data['hash'])->exists();
+                if ($exists) {
+                    continue;
+                }
+
+                // New data
+                $nData = [
+                    'phone' => $phone,
+                    'status' => $data['status'],
+                    'hash' => $data['hash'],
+                    'text' => $data['text'],
+                    'customer_id' => $data['customer_id']
+                ];
+                
+                $message = Message::create($nData);
+            }
+
+        }
+
+        // Duplicate, data not added
+        if (!isset($message)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Multi Double Message',
+            ], 409);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Message Added',
-            'callback_url' => urlMainServer() . "/api/messages/" . $message['id']
+            'message' => 'Message Added'
         ], 200);
     }
 
