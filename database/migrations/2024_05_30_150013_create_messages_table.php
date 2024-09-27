@@ -18,7 +18,7 @@ return new class extends Migration
             $table->enum('status', ['pending', 'sending', 'success', 'failed']);
             $table->string('phone');
             $table->string('hash');
-            $table->string('text');
+            $table->text('text');
             $table->string('customer_id');
             $table->timestamps();
         });
