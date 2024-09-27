@@ -47,12 +47,37 @@ class MessageController extends Controller
         ], 200);
     }
 
+    private function addMessage($param, $data) {
+        // Check
+        $data['hash'] = hash('sha256', $data['phone'] . $data['text']);
+        $exists = Message::where('hash', $data['hash'])->exists();
+        if ($exists) {
+            return null;
+        }
+
+        // New data
+        $nData = [
+            'phone' => $data['phone'],
+            'status' => $param['status'],
+            'hash' => $data['hash'],
+            'text' => $data['text'],
+            'customer_id' => $param['customer_id']
+        ];
+        
+        return Message::create($nData);
+    }
+
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'nullable|numeric',
-            'phone_list' => 'nullable|array',
-            'text' => 'required'
+            // If 'data_list' is not provided, 'phone' and 'text' must be valid.
+            'phone' => 'nullable|numeric|required_without:data_list',
+            'text' => 'nullable|string|required_without:data_list',
+        
+            // If 'phone' and 'text' are not provided, 'data_list' must be an array with valid phone and text for each entry.
+            'data_list' => 'nullable|array|required_without_all:phone,text',
+            'data_list.*.phone' => 'nullable|numeric|required_with:data_list',
+            'data_list.*.text' => 'nullable|string|required_with:data_list',
         ]);
 
         if ($validator->fails()) {
@@ -65,53 +90,23 @@ class MessageController extends Controller
 
         $customer = $request->customer;
         $data = $validator->validated();
-        
-        // Data
-        $data['status'] = 'pending';
-        $data['customer_id'] = $customer['id'];
 
-        if (isset($data['phone'])) {
-            // Check
-            $data['hash'] = hash('sha256', $data['phone'] . $data['text']);
-            $exists = Message::where('hash', $data['hash'])->exists();
-            if ($exists) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Double Message'
-                ], 409);
-            }
+        $param = [
+            'status' => 'pending',
+            'customer_id' => $customer['id']
+        ];
 
-            // New data
-            $nData = [
-                'phone' => $data['phone'],
-                'status' => $data['status'],
-                'hash' => $data['hash'],
-                'text' => $data['text'],
-                'customer_id' => $data['customer_id']
-            ];
-            
-            $message = Message::create($nData);
+        if (isset($data['phone']) && isset($data['text'])) {
+            // Single Message
+            $message = $this->addMessage($param, $data);
 
-        } else if(isset($data['phone_list'])) {
-            // Phone List Array
-            foreach ($data['phone_list'] as $phone) {
-                // Check
-                $data['hash'] = hash('sha256', $phone . $data['text']);
-                $exists = Message::where('hash', $data['hash'])->exists();
-                if ($exists) {
-                    continue;
+        } else if(isset($data['data_list'])) {
+            // Data List Array
+            foreach ($data['data_list'] as $ldata) {
+                $lmessage = $this->addMessage($param, $ldata);
+                if ($lmessage) {
+                    $message = $lmessage;
                 }
-
-                // New data
-                $nData = [
-                    'phone' => $phone,
-                    'status' => $data['status'],
-                    'hash' => $data['hash'],
-                    'text' => $data['text'],
-                    'customer_id' => $data['customer_id']
-                ];
-                
-                $message = Message::create($nData);
             }
 
         }
@@ -120,7 +115,7 @@ class MessageController extends Controller
         if (!isset($message)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Multi Double Message',
+                'message' => 'Double Message',
             ], 409);
         }
 
